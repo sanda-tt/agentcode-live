@@ -1,0 +1,23 @@
+name: Bug report
+description: Report a reproducible issue
+title: "[Bug] "
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: AgentCode Live, VS Code, OS and agent versions
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce with a sample workspace
+      description: Remove credentials, private paths and unpublished source from logs.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

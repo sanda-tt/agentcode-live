@@ -1,0 +1,22 @@
+import { appendFile, rename, rm, writeFile } from 'node:fs/promises';
+import { setTimeout as delay } from 'node:timers/promises';
+
+const sample = name => new URL('./c-demo/agentcode_demo_' + name, import.meta.url);
+const main = sample('main.c');
+const scratch = sample('scratch.c');
+const moved = sample('scratch_moved.c');
+for (const path of [main, scratch, moved]) await rm(path, { force: true });
+await delay(700);
+const initial = '#include <stdio.h>\n\nstatic int answer(void) {\n    return 6 * 7;\n}\n';
+const entry = '\nint main(void) {\n    printf("%d\\n", answer());\n    return 0;\n}\n';
+await writeFile(main, initial);
+await delay(1700);
+await appendFile(main, entry);
+await delay(1700);
+await writeFile(main, '#include <stdio.h>\n\nint main(void) {\n    puts("AgentCode Live");\n    return 0;\n}\n');
+await writeFile(scratch, 'int review(void) { return 1; }\n');
+await delay(1700);
+await rename(scratch, moved);
+await delay(1700);
+await rm(moved);
+console.log('Demo complete. Open the AgentCode Live timeline to replay the edits.');

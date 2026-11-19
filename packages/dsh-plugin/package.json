@@ -1,0 +1,12 @@
+{
+  "name": "dsh-agentcode-live",
+  "version": "0.1.0",
+  "description": "Send DeepSeek Harness lifecycle metadata to AgentCode Live for VS Code.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "files": ["index.js", "cordis.patch.yml", "README.md", "LICENSE"],
+  "engines": { "node": ">=24.9.0", "dsh": "0.2.2-rc.5" },
+  "repository": "https://github.com/sanda-tt/agentcode-live",
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}

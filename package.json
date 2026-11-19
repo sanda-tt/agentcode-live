@@ -1,0 +1,87 @@
+{
+  "name": "agentcode-live",
+  "displayName": "AgentCode Live",
+  "description": "Watch AI coding agents build software, live.",
+  "version": "0.1.0",
+  "publisher": "sanda-tt",
+  "license": "MIT",
+  "repository": "https://github.com/sanda-tt/agentcode-live",
+  "engines": { "vscode": "^1.100.0" },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["agent", "codex", "deepseek", "diff", "replay"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": false },
+    "virtualWorkspaces": { "supported": false }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "agentcodeLive.timeline", "title": "%command.timeline%", "category": "AgentCode Live", "icon": "$(history)" },
+      { "command": "agentcodeLive.pause", "title": "%command.pause%", "category": "AgentCode Live", "icon": "$(debug-pause)" },
+      { "command": "agentcodeLive.follow", "title": "%command.follow%", "category": "AgentCode Live", "icon": "$(location)" },
+      { "command": "agentcodeLive.filter", "title": "%command.filter%", "category": "AgentCode Live", "icon": "$(filter)" },
+      { "command": "agentcodeLive.session", "title": "%command.session%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.clear", "title": "%command.clear%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.preview", "title": "%command.preview%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.openFile", "title": "%command.openFile%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.cinematic", "title": "%command.cinematic%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.codex", "title": "%command.codex%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.codexStop", "title": "%command.codexStop%", "category": "AgentCode Live" },
+      { "command": "agentcodeLive.dsh", "title": "%command.dsh%", "category": "AgentCode Live" }
+    ],
+    "viewsContainers": {
+      "activitybar": [{ "id": "agentcodeLive", "title": "AgentCode Live", "icon": "media/activity.svg" }]
+    },
+    "views": {
+      "agentcodeLive": [{ "id": "agentcodeLive.activity", "name": "%view.activity%", "contextualTitle": "AgentCode Live" }]
+    },
+    "menus": {
+      "view/title": [
+        { "command": "agentcodeLive.timeline", "when": "view == agentcodeLive.activity", "group": "navigation@1" },
+        { "command": "agentcodeLive.follow", "when": "view == agentcodeLive.activity", "group": "navigation@2" },
+        { "command": "agentcodeLive.pause", "when": "view == agentcodeLive.activity", "group": "navigation@3" },
+        { "command": "agentcodeLive.filter", "when": "view == agentcodeLive.activity", "group": "navigation@4" }
+      ],
+      "view/item/context": [
+        { "command": "agentcodeLive.openFile", "when": "view == agentcodeLive.activity && viewItem == agentcodeLive.snapshot" },
+        { "command": "agentcodeLive.cinematic", "when": "view == agentcodeLive.activity && viewItem == agentcodeLive.snapshot" }
+      ]
+    },
+    "configuration": {
+      "title": "AgentCode Live",
+      "properties": {
+        "agentcodeLive.enabled": { "type": "boolean", "default": true, "scope": "machine-overridable", "description": "%setting.enabled%" },
+        "agentcodeLive.follow": { "type": "boolean", "default": false, "description": "%setting.follow%" },
+        "agentcodeLive.mode": { "type": "string", "enum": ["instant", "cinematic"], "default": "instant", "description": "%setting.mode%" },
+        "agentcodeLive.animationLinesPerSecond": { "type": "number", "minimum": 5, "maximum": 300, "default": 40, "description": "%setting.speed%" },
+        "agentcodeLive.history": { "type": "boolean", "default": true, "description": "%setting.history%" },
+        "agentcodeLive.maxHistoryMiB": { "type": "number", "minimum": 1, "maximum": 128, "default": 24, "description": "%setting.historyLimit%" },
+        "agentcodeLive.maxFileKiB": { "type": "number", "minimum": 4, "maximum": 2048, "default": 256, "description": "%setting.fileLimit%" },
+        "agentcodeLive.ignore": { "type": "array", "items": { "type": "string" }, "default": [], "description": "%setting.ignore%" },
+        "agentcodeLive.addedColor": { "type": "string", "default": "", "description": "%setting.addedColor%" },
+        "agentcodeLive.codexExecutable": { "type": "string", "default": "codex", "scope": "machine", "description": "%setting.codexExecutable%" }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "tsc && node --test build/tests/*.test.js",
+    "test:vscode": "npm run build && tsc && node scripts/test-vscode.mjs",
+    "package": "npm run build && vsce package --no-dependencies --out artifacts/agentcode-live-0.1.0.vsix",
+    "package:dsh": "node scripts/package-dsh.mjs",
+    "verify:licenses": "npm ls --omit=dev"
+  },
+  "dependencies": {
+    "diff": "9.0.0",
+    "ignore": "7.0.16"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "@types/vscode": "1.100.0",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.1.1",
+    "esbuild": "0.27.4",
+    "typescript": "5.9.3"
+  }
+}

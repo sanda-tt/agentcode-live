@@ -1,0 +1,10 @@
+node_modules/
+build/
+dist/
+artifacts/
+*.tgz
+*.vsix
+.vscode-test/
+.env*
+.DS_Store
+examples/c-demo/agentcode_demo_*

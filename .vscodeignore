@@ -1,0 +1,12 @@
+**
+!dist/
+!dist/extension.js
+!media/
+!media/**
+!LICENSE
+!THIRD_PARTY_NOTICES.md
+!README.md
+!README.zh-CN.md
+!CHANGELOG.md
+!package.json
+!package.nls*.json
