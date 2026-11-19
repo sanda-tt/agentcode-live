@@ -28,6 +28,10 @@ In an active DSH Web session, select **File activity** or 「文件活动」 in 
 
 [Verified DSH Web screenshot · 浏览器实测截图](images/dsh-file-activity.png)
 
+## Local model · 本地模型
+
+The official DSH custom model configuration accepts an OpenAI Chat Completions endpoint on loopback. AgentCode Live verified a real DSH headless task with Qwen3-4B Q4_K_M served by llama.cpp b12549. The native file-write events reached the same bridge used by VS Code. Configure the endpoint, model identifier and its local credential through the official DSH provider settings. [DSH model configuration](https://deepseek-harness.github.io/deepseek-harness/en/guide/providers)
+
 ## Reload and uninstall · 重载与卸载
 
 The bridge binds to IPv4 localhost and authenticates with a per-launch random token in the descriptor file. Keep that file local to the host. On VS Code reload it publishes a new endpoint at the same path. The plugin retries on a heartbeat and queues at most 128 events during a disconnect. Stop the DSH Web process and restart the profile to reload the bundle. To uninstall:
