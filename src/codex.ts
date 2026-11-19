@@ -105,6 +105,7 @@ export class ManagedCodex {
     private readonly engine: Engine,
     private readonly allowedUri: (path: string) => Promise<string | undefined>,
     private readonly log: (text: string) => void,
+    private readonly version: string,
   ) {}
 
   async prompt(executable: string, cwd: string, text: string) {
@@ -126,7 +127,7 @@ export class ManagedCodex {
           this.log(error.message);
         }, this.log);
         this.server = server = created;
-        await server.request('initialize', { clientInfo: { name: 'agentcode_live', title: 'AgentCode Live', version: '0.1.0' } });
+        await server.request('initialize', { clientInfo: { name: 'agentcode_live', title: 'AgentCode Live', version: this.version } });
         server.notify('initialized');
         const result = await server.request('thread/start', { cwd, approvalPolicy: 'never', sandbox: 'workspace-write', ephemeral: true });
         if (this.server !== server) throw new Error('Managed Codex disconnected during startup.');

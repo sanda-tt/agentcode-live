@@ -1,5 +1,7 @@
 # Third-party notices
 
+The DSH bundle declares a separate npm dependency on Zod 4.6.7 (MIT, Colin McDonnell). npm distributes its license with that package.
+
 ## diff 9.0.0 (BSD-3-Clause)
 
 BSD 3-Clause License

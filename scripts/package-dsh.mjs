@@ -7,7 +7,7 @@ const staging = await mkdtemp(join(tmpdir(), 'agentcode-dsh-package-'));
 const destination = resolve('artifacts');
 try {
   await mkdir(destination, { recursive: true });
-  for (const entry of ['package.json', 'index.js', 'README.md', 'cordis.patch.yml']) {
+  for (const entry of ['package.json', 'index.js', 'changes.js', 'client.js', 'README.md', 'cordis.patch.yml']) {
     await copyFile(join('packages', 'dsh-plugin', entry), join(staging, entry));
   }
   await copyFile('LICENSE', join(staging, 'LICENSE'));

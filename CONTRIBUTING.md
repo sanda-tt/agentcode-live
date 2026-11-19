@@ -4,6 +4,8 @@ Install Node.js 24 and run `npm ci`. Run `npm test` for core and transport tests
 
 Set `AGENTCODE_TEST_CODEX=1` and, if necessary, `AGENTCODE_CODEX` to an authenticated Codex executable for live agent acceptance. For DSH, set `AGENTCODE_DSH_CLI` and `AGENTCODE_DSH_TOOLS` to the installed official packages' `dsh/lib/bin.js` and `dsh-tools/lib/index.js`. Both checks use isolated project data. The DSH test invokes a real Cordis tool and needs no model key.
 
+For the DSH Web browser test, set `AGENTCODE_DSH_CLI` to the official DSH entry and `AGENTCODE_CHROME` to the Chrome executable, then run `npm run test:dsh-web`. This installs the packaged bundle in a temporary Web profile. It uses a test-only local model catalog and runs two native DSH file writes without model inference.
+
 Use the example project or a temporary workspace for reports and screenshots. Include the observed event, its expected provenance and relevant versions. Remove private paths, source and credentials from logs.
 
 Keep adapters independent from UI. File snapshots come from disk observation. Native activity carries explicit agent identity and its own session ID. Presentation consumes recorded data through read-only views.

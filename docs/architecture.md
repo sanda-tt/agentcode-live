@@ -8,4 +8,4 @@
 
 We reviewed [Change Agent Watch](https://github.com/DamianEdwards/vsc-change-agent-watch) for native file following and [Tellurion](https://github.com/steventsvik/Tellurion) for agent activity design. AgentCode Live combines workspace snapshots, provider provenance and read-only replay in VS Code.
 
-The roadmap includes optional DSH Web integration, history export and additional native providers.
+The DSH Web panel uses a bounded metadata projection in the official Session transport and a native conversation view. The roadmap includes history export and additional native providers.

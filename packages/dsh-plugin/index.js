@@ -1,11 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
+import { fileActivityProjection } from './changes.js';
 
 export const name = 'agentcode-live';
 export const inject = ['tools', 'sessions'];
 
 export function apply(ctx, config) {
+  ctx.inject(['sessionProjections'], async scoped => {
+    await scoped.sessionProjections.register(fileActivityProjection);
+  });
   const descriptor = config?.descriptor ?? process.env.AGENTCODE_LIVE_DSH_DESCRIPTOR;
   if (typeof descriptor !== 'string' || !isAbsolute(descriptor)) {
     ctx.logger.warn('[AgentCode Live] Set AGENTCODE_LIVE_DSH_DESCRIPTOR to the absolute path copied from VS Code.');

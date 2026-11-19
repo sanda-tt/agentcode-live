@@ -2,7 +2,7 @@
   "name": "agentcode-live",
   "displayName": "AgentCode Live",
   "description": "Watch AI coding agents build software, live.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "sanda-tt",
   "license": "MIT",
   "repository": "https://github.com/sanda-tt/agentcode-live",
@@ -66,9 +66,10 @@
   },
   "scripts": {
     "build": "tsc --noEmit && node scripts/build.mjs",
-    "test": "tsc && node --test build/tests/*.test.js",
+    "test": "tsc && node --test build/tests/*.test.js tests/*.test.mjs",
     "test:vscode": "npm run build && tsc && node scripts/test-vscode.mjs",
-    "package": "npm run build && vsce package --no-dependencies --out artifacts/agentcode-live-0.1.0.vsix",
+    "test:dsh-web": "npm run package:dsh && node scripts/test-dsh-web.mjs",
+    "package": "npm run build && vsce package --no-dependencies --out artifacts/agentcode-live-0.1.1.vsix",
     "package:dsh": "node scripts/package-dsh.mjs",
     "verify:licenses": "npm ls --omit=dev"
   },
@@ -82,6 +83,8 @@
     "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "4.1.1",
     "esbuild": "0.27.4",
-    "typescript": "5.9.3"
+    "playwright-core": "1.65.1",
+    "typescript": "5.9.3",
+    "zod": "4.6.7"
   }
 }

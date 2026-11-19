@@ -43,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const descriptor = join(workspace, 'dsh-bridge.json');
   const codex = own(new ManagedCodex(engine, async path => {
     for (const { observer } of observers) if (await observer.allows(path)) return vscode.Uri.file(path).toString();
-  }, report));
+  }, report, context.extension.packageJSON.version));
   const timeline = own(new Timeline(context.extensionUri, () => store.events, event => virtualDiff.show(event), updateStatus));
   let followTimer: NodeJS.Timeout | undefined;
   let statusTimer: NodeJS.Timeout | undefined;
