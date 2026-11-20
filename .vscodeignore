@@ -1,6 +1,8 @@
 **
 !dist/
 !dist/extension.js
+!dist/webview/
+!dist/webview/timeline.js
 !media/
 !media/**
 !LICENSE

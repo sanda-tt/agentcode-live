@@ -3,8 +3,15 @@ import * as vscode from 'vscode';
 import { getDiff, isSnapshot, type Activity } from './core';
 
 export const config = () => vscode.workspace.getConfiguration('agentcodeLive');
-const zh = vscode.env.language.toLowerCase().startsWith('zh');
-export const tr = (en: string, cn: string) => zh ? cn : en;
+let displayLanguage: 'en' | 'zh-CN' = 'en';
+
+export function configureLanguage() {
+  const choice = config().get<string>('language', 'auto');
+  const useChinese = choice === 'zh-CN' || choice === 'auto' && /^zh(?:-|$)/iu.test(vscode.env.language);
+  displayLanguage = useChinese ? 'zh-CN' : 'en';
+}
+
+export const tr = (en: string, cn: string) => displayLanguage === 'zh-CN' ? cn : en;
 
 const words: Record<string, string> = {
   created: '新建', modified: '修改', deleted: '删除', renamed: '重命名',
@@ -19,7 +26,7 @@ const enWords: Record<string, string> = {
   observed: 'Disk observation', inferred: 'Inferred', native: 'Native event', presentation: 'Presentation',
   inProgress: 'In progress',
 };
-export const word = (key: string) => (zh ? words[key] : enWords[key]) ?? key.replace(/^./u, letter => letter.toUpperCase());
+export const word = (key: string) => (displayLanguage === 'zh-CN' ? words[key] : enWords[key]) ?? key.replace(/^./u, letter => letter.toUpperCase());
 
 const labels: Record<string, [string, string]> = {
   codexSession: ['Managed Codex session', '托管 Codex 会话'],
@@ -67,7 +74,7 @@ export class ActivityTree implements vscode.TreeDataProvider<Activity>, vscode.D
     item.id = event.eventId;
     item.description = [word(event.eventType), summary(event), word(event.agentId)].filter(Boolean).join(' · ');
     item.tooltip = [
-      new Date(event.timestamp).toLocaleString(), title(event), item.description,
+      new Date(event.timestamp).toLocaleString(displayLanguage), title(event), item.description,
       word(event.provenance), event.oldFileUri ? pathLabel(event.oldFileUri) + ' → ' + pathLabel(event.fileUri) : '',
       tr('Session', '会话') + ' ' + event.sessionId,
     ].filter(Boolean).join('\n');
@@ -285,11 +292,13 @@ export class VirtualDiff implements vscode.TextDocumentContentProvider, vscode.D
   }
 }
 
-const uiStrings = {
+const timelineStrings = () => ({
   timeline: tr('Timeline', '时间线'), cinematic: tr('Cinematic preview', '动态预览'),
-  readOnly: tr('Read-only snapshots', '只读快照'),
-  presentation: tr('Presentation animation from captured disk snapshots', '基于磁盘快照的展示动画'),
-  play: tr('Play', '播放'), pause: tr('Pause', '暂停'),
+  presentation: tr('Animated from recorded snapshots', '基于记录的快照播放动画'),
+  play: tr('Play', '播放'), pause: tr('Pause', '暂停'), replayChange: tr('Replay change', '重播此变更'),
+  live: tr('Watch live', '实时观看'),
+  waiting: tr('Waiting for a workspace file change…', '正在等待工作区文件变化…'),
+  recordedChange: tr('File change', '文件变化'),
   previous: tr('Previous event', '上一条'), next: tr('Next event', '下一条'),
   position: tr('Playback position', '回放进度'), speed: tr('Playback speed', '回放速度'),
   files: tr('Filter file paths', '筛选文件路径'), allOperations: tr('All operations', '全部操作'),
@@ -301,13 +310,15 @@ const uiStrings = {
   beforeUnknown: tr('Earlier contents unavailable. Showing the first captured state.', '变更前内容不可用，以下是首次读到的状态。'),
   coarse: tr('The line diff reached its time budget. Both complete versions are shown.', '行级差异计算已达到时间上限，以下展示两个完整版本。'),
   truncated: tr('Preview line limit reached. Open in editor to see the full snapshot.', '已达到预览行数上限，可在编辑器中打开完整快照。'),
-};
+});
 
 export class Timeline implements vscode.Disposable {
+  private readonly uiStrings = timelineStrings();
   private timeline?: vscode.WebviewPanel;
   private cinema?: vscode.WebviewPanel;
   private cinemaSubscription?: vscode.Disposable;
   private timer?: NodeJS.Timeout;
+  private live = false;
   private readonly selectedEvents = new Map<string, Activity>();
 
   constructor(
@@ -317,21 +328,30 @@ export class Timeline implements vscode.Disposable {
     private readonly modeChanged: () => void,
   ) {}
 
-  get replay() { return Boolean(this.timeline?.active); }
+  get active() { return Boolean(this.timeline?.active); }
+  get replay() { return this.active && !this.live; }
 
-  open() {
+  open(live = false) {
     const existing = this.timeline;
-    if (existing) { existing.reveal(); return; }
-    const panel = this.create('agentcodeLive.timeline', uiStrings.timeline, vscode.ViewColumn.Active, false);
+    if (existing) {
+      existing.reveal();
+      if (live) void existing.webview.postMessage({ type: 'live' });
+      return;
+    }
+    this.live = live;
+    const panel = this.create('agentcodeLive.timeline', this.uiStrings.timeline, vscode.ViewColumn.Active, false, live);
     this.timeline = panel;
     panel.onDidDispose(() => { this.timeline = undefined; this.modeChanged(); });
     panel.onDidChangeViewState(() => this.modeChanged());
-    panel.webview.onDidReceiveMessage((message: { type: string; id?: string }) => {
+    panel.webview.onDidReceiveMessage((message: { type: string; id?: string; request?: number; live?: boolean }) => {
       if (message.type === 'ready') this.update();
+      if (message.type === 'mode') { this.live = message.live === true; this.modeChanged(); }
       const event = message.id ? this.selectedEvents.get(message.id) : undefined;
-      if (!event) return;
-      if (message.type === 'select') void panel.webview.postMessage({ type: 'detail', id: event.eventId, detail: this.detail(event) });
-      if (message.type === 'open') void this.showDiff(event);
+      if (message.type === 'select') void panel.webview.postMessage({
+        type: 'detail', id: message.id, request: message.request, detail: event && this.detail(event),
+        linesPerSecond: config().get('animationLinesPerSecond', 40),
+      });
+      if (message.type === 'open' && event) void this.showDiff(event);
     });
     this.modeChanged();
   }
@@ -339,7 +359,7 @@ export class Timeline implements vscode.Disposable {
   showCinema(event: Activity, background = false) {
     if (!isSnapshot(event)) return;
     if (!this.cinema) {
-      const panel = this.create('agentcodeLive.cinematic', uiStrings.cinematic, vscode.ViewColumn.Beside, background);
+      const panel = this.create('agentcodeLive.cinematic', this.uiStrings.cinematic, vscode.ViewColumn.Beside, background);
       this.cinema = panel;
       panel.onDidDispose(() => { this.cinema = undefined; this.cinemaSubscription?.dispose(); });
     } else if (!background) this.cinema.reveal();
@@ -349,9 +369,9 @@ export class Timeline implements vscode.Disposable {
       linesPerSecond: config().get('animationLinesPerSecond', 40),
     });
     this.cinemaSubscription?.dispose();
-    this.cinemaSubscription = panel.webview.onDidReceiveMessage((message: { type: string }) => {
+    this.cinemaSubscription = panel.webview.onDidReceiveMessage((message: { type: string; id?: string }) => {
       if (message.type === 'ready') void send();
-      if (message.type === 'open') void this.showDiff(event);
+      if (message.type === 'open' && message.id === event.eventId) void this.showDiff(event);
     });
     void send();
   }
@@ -374,26 +394,27 @@ export class Timeline implements vscode.Disposable {
     void this.timeline?.webview.postMessage({ type: 'events', events: events.map(event => this.meta(event)) });
   }
 
-  private create(id: string, label: string, column: vscode.ViewColumn, preserveFocus: boolean) {
+  private create(id: string, label: string, column: vscode.ViewColumn, preserveFocus: boolean, live = false) {
     const media = vscode.Uri.joinPath(this.extensionUri, 'media');
+    const web = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview');
     const panel = vscode.window.createWebviewPanel(id, `AgentCode Live · ${label}`, { viewColumn: column, preserveFocus }, {
-      enableScripts: true, localResourceRoots: [media], retainContextWhenHidden: true,
+      enableScripts: true, localResourceRoots: [media, web], retainContextWhenHidden: true,
     });
     panel.iconPath = vscode.Uri.joinPath(media, 'activity.svg');
-    const script = panel.webview.asWebviewUri(vscode.Uri.joinPath(media, 'timeline.js'));
+    const script = panel.webview.asWebviewUri(vscode.Uri.joinPath(web, 'timeline.js'));
     const css = panel.webview.asWebviewUri(vscode.Uri.joinPath(media, 'timeline.css'));
     const nonce = randomBytes(24).toString('hex');
     const cinema = id.endsWith('cinematic');
-    panel.webview.html = `<!doctype html><html lang="${zh ? 'zh-CN' : 'en'}"><head>
+    panel.webview.html = `<!doctype html><html lang="${displayLanguage}"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';">
       <link rel="stylesheet" href="${css}">
-      <title>${label}</title></head><body data-mode="${cinema ? 'cinematic' : 'timeline'}">
-      <header><h1>${label}</h1><p>${cinema ? uiStrings.presentation : uiStrings.readOnly}</p></header>
-      <section id="filters" aria-label="${uiStrings.files}"></section>
+      <title>${label}</title></head><body data-mode="${cinema ? 'cinematic' : 'timeline'}" data-live="${live}">
+      <header><h1>${label}</h1><p>${this.uiStrings.presentation}</p></header>
+      <section id="filters" aria-label="${this.uiStrings.files}"></section>
       <section id="transport"></section>
-      <main><section id="events" aria-label="${uiStrings.recent}"></section><section id="detail"></section></main>
-      <script nonce="${nonce}">window.labels=${JSON.stringify(uiStrings)};</script>
+      <main><section id="events" aria-label="${this.uiStrings.recent}"></section><section id="detail"></section></main>
+      <script nonce="${nonce}">window.labels=${JSON.stringify(this.uiStrings)};</script>
       <script nonce="${nonce}" src="${script}"></script></body></html>`;
     return panel;
   }
@@ -402,6 +423,8 @@ export class Timeline implements vscode.Disposable {
     return {
       id: event.eventId, timestamp: event.timestamp, session: event.sessionId,
       agent: word(event.agentId), operation: word(event.eventType), provenance: word(event.provenance),
+      kind: event.eventType, snapshot: isSnapshot(event),
+      actor: event.agentId === 'Unknown' ? this.uiStrings.recordedChange : word(event.agentId),
       file: pathLabel(event.fileUri), oldFile: pathLabel(event.oldFileUri), label: title(event),
       status: event.status ? word(event.status) : '',
     };
@@ -419,8 +442,8 @@ export class Timeline implements vscode.Disposable {
     return {
       snapshot: isSnapshot(event), after: event.after, beforeKnown: event.before !== undefined,
       blocks, coarse: diff?.coarse, patch: event.nativePatch,
+      added: diff?.added, removed: diff?.removed,
       truncated: lines >= 5000,
-      summary: summary(event),
     };
   }
 }

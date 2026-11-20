@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add an extension language picker for English, Simplified Chinese and the VS Code display language. Add parallel English and Chinese repository documentation.
+- Add live Timeline viewing, cursor-led diff animation during live viewing and replay, and a clearer redesign of the event rail and code preview.
+
 ## 0.1.1
 
 - Add a native DSH Web session tab that updates with confirmed file-tool results.

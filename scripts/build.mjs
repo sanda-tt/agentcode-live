@@ -11,3 +11,11 @@ await build({
   external: ['vscode'],
   legalComments: 'inline',
 });
+await build({
+  entryPoints: ['media/timeline.js'],
+  outfile: 'dist/webview/timeline.js',
+  bundle: true,
+  target: 'chrome132',
+  minify: true,
+  legalComments: 'inline',
+});

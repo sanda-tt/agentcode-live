@@ -1,5 +1,7 @@
 # Codex integration · Codex 接入
 
+**English** · [简体中文](codex.zh-CN.md)
+
 ## Observer · 观察模式
 
 Install AgentCode Live, open a trusted local folder, and run the official Codex VS Code extension or `codex` in that folder. The observer sees captured workspace writes even when Codex used a shell or applied a large patch. Disk paths remain attributed to **Unknown**. Existing extension and CLI sessions can keep their own login, configuration and tools.

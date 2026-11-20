@@ -1,20 +1,24 @@
 # AgentCode Live
 
+**English** · [简体中文](README.zh-CN.md)
+
 Watch AI coding agents build software, live.
 
-AgentCode Live observes workspace files from VS Code and shows their captured changes in the editor, Explorer and a local timeline. It works with your existing Codex extension, Codex CLI, DeepSeek Harness and scripts. [简体中文](README.zh-CN.md)
+AgentCode Live observes workspace files from VS Code and shows their captured changes in the editor, Explorer and a local timeline. It works with your existing Codex extension, Codex CLI, DeepSeek Harness and scripts.
 
 ![VS Code timeline showing added and removed C code](docs/images/timeline.png)
 
 ## Install and try
 
-1. Download the VSIX from [GitHub Releases](https://github.com/sanda-tt/agentcode-live/releases) and choose **Extensions → ⋯ → Install from VSIX**. VS Code 1.100 or later is required.
+1. Download the VSIX from [GitHub Releases](https://github.com/sanda-tt/agentcode-live/releases) and choose **Extensions → ⋯ → Install from VSIX**. VS Code 1.100 or later is required. For the current source features, run `npm ci` and `npm run package` from the repository root.
 2. Open a trusted local folder and click **AgentCode Live** in the Activity Bar. Run your agent as usual or open [the C demo](examples/c-demo) as a VS Code folder.
-3. Save a source file or run `node examples/play-demo.mjs` from the repository root. Click an activity row for the before/after diff. Use the clock icon to open Timeline and step through the captured versions.
+3. Choose **Watch Changes Live** in the Activity view toolbar or Command Palette. Save a source file or run `node examples/play-demo.mjs` from the repository root. The timeline follows matching file changes and keeps earlier events available for review.
 
-Enable **Follow Agent** from the Activity view toolbar. It updates a background editor and gives manual typing priority. Toggle it off to pin your view. **Instant** decorates current disk contents. **Cinematic** animates recorded diffs inside a read-only preview. Playback speed and file, operation, agent, and session filters are in Timeline.
+Enable **Follow Agent** from the Activity view toolbar to update a background editor and give manual typing priority. **Instant** decorates current disk contents. **Cinematic** animates one recorded diff in a read-only preview. Timeline can also animate history as you play it. Select an event or drag the playhead to leave live viewing and inspect a recorded version. All animation comes from snapshots and respects reduced-motion preferences.
 
-[Recorded Windows demo](docs/images/live-demo.gif) · [Explorer and live highlights](docs/images/editor-explorer.png) · [Native before/after diff](docs/images/editor-diff.png)
+The moving cursor and staged reveal take visual inspiration from [Swarm Rebuild](https://github.com/DhvanilPatel/swarm-cursors) and [Joel Califa’s Swarm](https://califa.github.io/swarm-site/).
+
+[Animated C demo recorded in VS Code](docs/images/cursor-demo.gif) · [Explorer and live highlights](docs/images/editor-explorer.png) · [Native before/after diff](docs/images/editor-diff.png)
 
 ## Integrations
 
@@ -28,8 +32,11 @@ The observer works independently of either native adapter. Use the native VS Cod
 
 ## Settings
 
+Run **AgentCode Live: Choose Extension Language** from the Command Palette, select **Follow VS Code**, **English**, or **简体中文**, then reload the window. You can also set `agentcodeLive.language` in user settings. The Command Palette names and Settings labels follow the [VS Code display language](https://code.visualstudio.com/docs/configure/locales). The **File activity** tab follows the DSH Web interface language.
+
 | Setting | Default |
 | --- | --- |
+| `agentcodeLive.language` | `auto`; also accepts `en` and `zh-CN` |
 | `agentcodeLive.enabled` | Workspace monitoring on |
 | `agentcodeLive.follow` | Off |
 | `agentcodeLive.mode` | `instant`; choose `cinematic` for animated follow |

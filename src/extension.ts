@@ -6,13 +6,14 @@ import { Observer, watcherGlob } from './observer';
 import { History } from './history';
 import { ManagedCodex } from './codex';
 import { DshBridge } from './dsh';
-import { ActivityTree, config, Decorations, Timeline, tr, VirtualDiff } from './ui';
+import { ActivityTree, config, configureLanguage, Decorations, Timeline, tr, VirtualDiff } from './ui';
 
 let history: History | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   const workspace = context.storageUri?.fsPath;
   if (!workspace) return;
+  configureLanguage();
   const own = <T extends vscode.Disposable>(item: T) => { context.subscriptions.push(item); return item; };
   const output = own(vscode.window.createOutputChannel('AgentCode Live'));
   const report = (error: unknown) => output.appendLine(error instanceof Error ? error.message : String(error));
@@ -105,7 +106,7 @@ export async function activate(context: vscode.ExtensionContext) {
       followSequence = followSequence.then(async () => {
         const current = queuedFollow;
         queuedFollow = undefined;
-        if (!current || !enabled() || tree.paused || !follow() || timeline.replay ||
+        if (!current || !enabled() || tree.paused || !follow() || timeline.active ||
           vscode.window.activeTextEditor?.document.isDirty || Date.now() - lastWorkspaceTyping < 1600) return;
         if (config().get<string>('mode') === 'cinematic') timeline.showCinema(current, true);
         else await jump(current, true);
@@ -178,6 +179,24 @@ export async function activate(context: vscode.ExtensionContext) {
     own(vscode.commands.registerCommand('agentcodeLive.' + name, run));
 
   command('timeline', () => timeline.open());
+  command('present', () => timeline.open(true));
+  command('language', async () => {
+    const current = config().get<string>('language', 'auto');
+    const choice = await vscode.window.showQuickPick([
+      { label: 'Follow VS Code · 跟随 VS Code', value: 'auto' },
+      { label: 'English', value: 'en' },
+      { label: '简体中文', value: 'zh-CN' },
+    ].map(item => ({ ...item, description: item.value === current ? 'Current · 当前' : undefined })), {
+      placeHolder: 'Choose AgentCode Live language · 选择扩展语言',
+    });
+    if (!choice) return;
+    if (choice.value !== current) await config().update('language', choice.value, vscode.ConfigurationTarget.Global);
+    const reload = 'Reload Window · 重载窗口';
+    const action = await vscode.window.showInformationMessage(
+      'The language is applied after reloading the window. 重载窗口后应用语言。', reload,
+    );
+    if (action === reload) await vscode.commands.executeCommand('workbench.action.reloadWindow');
+  });
   command('filter', () => tree.filter());
   command('preview', (event?: Activity) => event && virtualDiff.show(event));
   command('openFile', (event?: Activity) => event && jump(event).catch(report));
@@ -210,7 +229,7 @@ export async function activate(context: vscode.ExtensionContext) {
       await vscode.env.clipboard.writeText(descriptor);
       updateStatus();
       void vscode.window.showInformationMessage(tr('DSH descriptor path copied. Set AGENTCODE_LIVE_DSH_DESCRIPTOR before launching DSH.', '已复制 DSH 描述文件路径。请在启动 DSH 前设置 AGENTCODE_LIVE_DSH_DESCRIPTOR。'));
-    } catch (error) { void vscode.window.showErrorMessage(String(error)); }
+    } catch (error) { void vscode.window.showErrorMessage(tr('The DSH bridge could not be enabled.', '无法启用 DSH 桥接。') + ' ' + String(error)); }
   });
   command('codex', async () => {
     const roots = local();
@@ -222,7 +241,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     if (!prompt?.trim()) return;
     try { await codex.prompt(config().get<string>('codexExecutable', 'codex'), root.uri.fsPath, prompt); }
-    catch (error) { void vscode.window.showErrorMessage(String(error)); }
+    catch (error) { void vscode.window.showErrorMessage(tr('The managed Codex task failed.', '托管 Codex 任务失败。') + ' ' + String(error)); }
   });
   command('codexStop', () => codex.dispose());
 

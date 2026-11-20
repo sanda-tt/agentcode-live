@@ -1,5 +1,7 @@
 # DeepSeek Harness installation · DSH 原生插件安装
 
+**English** · [简体中文](dsh.zh-CN.md)
+
 AgentCode Live pins its DSH Cordis bundle to official DeepSeek Harness `0.2.2-rc.5`. DSH requires Node.js 24.9.0 or later.
 
 ## Install the bundle in its own Web profile
